@@ -1,0 +1,44 @@
+name: abeato-usb-modeswitch
+version: '0.1'
+summary: Snap for usb_modeswitch
+description: |
+  USB_ModeSwitch is (surprise!) a mode switching tool for controlling
+  'multi-mode' USB devices. See https://www.draisberghof.de/usb_modeswitch/ for
+  more details. Please find the source code for the snap at
+  https://github.com/alfonsosanchezbeato/usb-modeswitch.
+  Connect the interfaces, then run usb_modeswitch. For instace, for a
+  device that we want to switch from VID:PID 19d2:2000 to 19d2:0066:
+    snap install abeato-usb-modeswitch
+    snap connect abeato-usb-modeswitch:hardware-observe
+    snap connect abeato-usb-modeswitch:raw-usb
+    sudo abeato-usb-modeswitch.usb-modeswitch -v 19d2 -p 2000 -V 19d2 -P 0066 \
+      -W -c /snap/abeato-usb-modeswitch/current/etc/usb_modeswitch.d/19d2:2000
+confinement: strict
+grade: stable
+base: core18
+
+apps:
+  usb-modeswitch:
+    command: usr/sbin/usb_modeswitch
+    plugs: [raw-usb, hardware-observe]
+
+parts:
+  usb-modeswitch:
+    plugin: nil
+    stage-packages:
+      - libusb-1.0-0
+      - usb-modeswitch
+      - usb-modeswitch-data
+    override-build: |
+      set -ex
+      packed="$SNAPCRAFT_PART_INSTALL"/usr/share/usb_modeswitch/configPack.tar.gz
+      dest="$SNAPCRAFT_PART_INSTALL"/etc/usb_modeswitch.d
+      tar xf "$packed" --directory "$dest"
+      snapcraftctl build
+    prime:
+      - etc/usb_modeswitch.d
+      - lib/*/libusb-1.0.*
+      - usr/sbin/usb_modeswitch
+      - usr/share/doc/libusb-1.0-0/copyright
+      - usr/share/doc/usb-modeswitch/copyright
+      - usr/share/doc/usb-modeswitch-data/copyright
